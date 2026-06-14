@@ -1,0 +1,9 @@
+# Internal design docs (brainstorming spec + plan) — kept local, not published
+docs/
+
+# KOReader per-book sidecars
+*.sdr/
+
+# OS / editor cruft
+.DS_Store
+*.swp
