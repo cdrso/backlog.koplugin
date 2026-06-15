@@ -14,15 +14,16 @@ KOReader treats the whole file as one book with a single progress bar, which tel
 
 ## Screenshots
 
-| | |
-|:--:|:--:|
-| <img src="screenshots/articles-list.jpg" width="360" alt="Articles list"><br>*Articles list — ▶ current, ✓ read, running count* | <img src="screenshots/menu.jpg" width="360" alt="Backlog menu under Tools"><br>*The Backlog menu, under Tools — incl. the fade-links option* |
+<p align="center">
+  <img src="screenshots/articles-list.jpg" width="360" alt="Articles list"><br>
+  <em>Articles list — ▶ current, ✓ read, running count</em>
+</p>
 
 ## Features
 
 - **Articles list** — every article with its status at a glance: **✓ read**, **▶ currently reading**, or unread, plus a **"N / total read"** counter. Magazines that group articles into sections get a header per section with its own read count.
 - **Tap to jump** to any article; **long-press to toggle** its read/unread state. Tap a **section header** to jump to its first article, or long-press it to mark the whole section read.
-- **Auto-mark on finish** — an article is marked read when you reach its end (configurable — see [Settings](#settings)).
+- **Auto-mark on finish** — an article is marked read when you **turn past its last page** (when you finish it and move on, not when its last page appears). On by default; can be turned off, and the notification can be silenced — see [Settings](#settings).
 - **Faded cross-references** — in the text, links pointing to articles you've already read are dimmed (like visited web links), so you can see at a glance which references you've been through. Adjustable strength, or off — see [Settings](#settings).
 - **Jump to next unread** — one action that takes you straight to the next article you haven't read (bindable to a gesture).
 - **Per-book persistence** — read state is saved with the book and keyed by each article's *location* in the document, so it **survives font changes (re-pagination) and restarts**.
@@ -67,16 +68,15 @@ Open a book that's a collection of articles, then:
 
 All under **Tools → Backlog (articles read)**.
 
-### Auto-mark read when…
+### Auto-mark articles read *(default: on)*
 
-| Mode | An article is auto-marked read when… |
-| --- | --- |
-| **End of article** *(default)* | you reach its last page |
-| **On leaving** | you move on to another article, after reading most of it |
-| **Either** | whichever happens first |
-| **Off** | never — you mark articles read manually only |
+An article is marked read once you **turn past its last page** — when you finish it and move on, not when its last page first appears. Paging past the end of the book marks the final article. Turn this off to mark every article manually.
 
-Auto-marking is never triggered by *jumping* to an article (via a link or the list) — only by actually reading through it.
+Auto-marking is never triggered by *jumping* to an article (via a link or the list) — only by reading through it.
+
+### Show read notifications *(default: on)*
+
+When an article is auto-marked read, a brief notification appears at the top of the screen. Turn this off to mark silently — the ✓ still appears in the articles list.
 
 ### Fade links to read articles
 
