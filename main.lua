@@ -4,12 +4,16 @@ local Notification = require("ui/widget/notification")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local ArticlesView = require("ui/articles_view")
+local ReflinksOverlay = require("ui/reflinks_overlay")
 local Model = require("lib/model")
 local logger = require("logger")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
 local AUTOMARK_MIN_FRACTION = 0.5
+
+-- lightenRect factors for the "Faded links" setting; "off" is absent -> nil.
+local FADE_LEVELS = { subtle = 0.25, medium = 0.4, strong = 0.6 }
 
 local Backlog = WidgetContainer:extend{
     name = "backlog",
@@ -60,6 +64,30 @@ function Backlog:onReaderReady()
     if self.state.tracked then
         self:_rebuildChapters() -- so auto-marking can run from the start
     end
+    self:_registerReflinksOverlay()
+end
+
+function Backlog:_registerReflinksOverlay()
+    if self._reflinks_registered then return end
+    local view = self.ui and self.ui.view
+    if not (view and view.registerViewModule) then return end
+    self.reflinks_overlay = ReflinksOverlay:new{ backlog = self }
+    view:registerViewModule("backlog_reflinks", self.reflinks_overlay)
+    self._reflinks_registered = true
+end
+
+function Backlog:getReflinksFadeMode()
+    return G_reader_settings:readSetting("backlog_reflinks_fade", "medium")
+end
+
+-- lightenRect factor for the current mode, or nil when "off".
+function Backlog:getReflinksFade()
+    return FADE_LEVELS[self:getReflinksFadeMode()]
+end
+
+function Backlog:_repaintPage()
+    local view = self.ui and self.ui.view
+    if view and view.dialog then UIManager:setDirty(view.dialog, "ui") end
 end
 
 function Backlog:onDocumentRerendered()
@@ -134,6 +162,7 @@ function Backlog:_markRead(index)
     Model.set_read(self.state, ch.key, os.time())
     logger.dbg("Backlog: marked read:", ch.title)
     UIManager:show(Notification:new{ text = T(_("Backlog: \"%1\" read"), ch.title) })
+    self:_repaintPage() -- refresh faded cross-reference links to this article
 end
 
 function Backlog:gotoChapter(index)
@@ -177,6 +206,7 @@ function Backlog:onBacklogToggleRead()
     if not cur then return true end
     local now = self:toggleRead(cur)
     UIManager:show(Notification:new{ text = now and _("Marked read") or _("Marked unread") })
+    self:_repaintPage()
     return true
 end
 
@@ -192,7 +222,7 @@ end
 function Backlog:addToMainMenu(menu_items)
     menu_items.backlog = {
         text = _("Backlog (articles read)"),
-        sorting_hint = "more_tools",
+        sorting_hint = "tools",
         sub_item_table = {
             {
                 text = _("Show articles"),
@@ -211,6 +241,15 @@ function Backlog:addToMainMenu(menu_items)
                     self:_modeRadio(_("Off (manual only)"), "off"),
                 },
             },
+            {
+                text = _("Fade links to read articles"),
+                sub_item_table = {
+                    self:_fadeRadio(_("Off"), "off"),
+                    self:_fadeRadio(_("Subtle"), "subtle"),
+                    self:_fadeRadio(_("Medium"), "medium"),
+                    self:_fadeRadio(_("Strong"), "strong"),
+                },
+            },
         },
     }
 end
@@ -221,6 +260,18 @@ function Backlog:_modeRadio(text, value)
         checked_func = function() return self:getAutoMarkMode() == value end,
         radio = true,
         callback = function() G_reader_settings:saveSetting("backlog_automark_mode", value) end,
+    }
+end
+
+function Backlog:_fadeRadio(text, value)
+    return {
+        text = text,
+        checked_func = function() return self:getReflinksFadeMode() == value end,
+        radio = true,
+        callback = function()
+            G_reader_settings:saveSetting("backlog_reflinks_fade", value)
+            self:_repaintPage()
+        end,
     }
 end
 

@@ -10,20 +10,20 @@ KOReader treats the whole file as one book with a single progress bar, which tel
 
 > **"Wait — have I already read this one?"**
 
-**Backlog** answers it. It treats each chapter (each top-level table-of-contents entry) as a separate **article**, remembers which ones you've read, shows them all in one list, and marks them read automatically as you finish — so you always know what's left, no matter how non-linearly you read.
+**Backlog** answers it. It treats each chapter (each top-level table-of-contents entry) as a separate **article**, remembers which ones you've read, shows them all in one list, **dims the in-text links that point to articles you've already read** (like visited web links), and marks them read automatically as you finish — so you always know what's left, no matter how non-linearly you read.
 
 ## Screenshots
 
 | | |
 |:--:|:--:|
-| <img src="screenshots/articles-list.jpg" width="360" alt="Articles list"><br>*Articles list — ✓ read, ▶ current, running count* | <img src="screenshots/menu.jpg" width="360" alt="Backlog menu"><br>*The Backlog menu* |
-| <img src="screenshots/settings.jpg" width="360" alt="Auto-mark settings"><br>*Auto-mark modes* | <img src="screenshots/more-tools.jpg" width="360" alt="More tools menu"><br>*Found under Tools → More tools* |
+| <img src="screenshots/articles-list.jpg" width="360" alt="Articles list"><br>*Articles list — ▶ current, ✓ read, running count* | <img src="screenshots/menu.jpg" width="360" alt="Backlog menu under Tools"><br>*The Backlog menu, under Tools — incl. the fade-links option* |
 
 ## Features
 
 - **Articles list** — every article with its status at a glance: **✓ read**, **▶ currently reading**, or unread, plus a **"N / total read"** counter.
 - **Tap to jump** to any article; **long-press to toggle** its read/unread state.
 - **Auto-mark on finish** — an article is marked read when you reach its end (configurable — see [Settings](#settings)).
+- **Faded cross-references** — in the text, links pointing to articles you've already read are dimmed (like visited web links), so you can see at a glance which references you've been through. Adjustable strength, or off — see [Settings](#settings).
 - **Jump to next unread** — one action that takes you straight to the next article you haven't read (bindable to a gesture).
 - **Per-book persistence** — read state is saved with the book and keyed by each article's *location* in the document, so it **survives font changes (re-pagination) and restarts**.
 - **Opt-in per book** — Backlog stays dormant until you open its article list for a book. Books you never use it on are left completely untouched (nothing is even written to their metadata).
@@ -56,17 +56,17 @@ If you have the [App Store plugin](https://github.com/omer-faruq/appstore.koplug
 
 Open a book that's a collection of articles, then:
 
-1. Tap the top of the screen → the **Tools** (wrench) menu → **More tools → Backlog (articles read) → Show articles.**
+1. Tap the top of the screen → the **Tools** (wrench) menu → **Backlog (articles read) → Show articles.**
 2. In the list:
    - **Tap** an article to jump to it.
    - **Long-press** an article to mark it read / unread.
 3. As you read, finishing an article marks it read automatically (configurable below).
 
-**Tip:** bind the actions **"Backlog: articles"** and **"Backlog: next unread"** to gestures (Settings → Taps and gestures → Gesture manager) for one-tap access without digging through the menu.
-
 ## Settings
 
-Under **Backlog → Auto-mark read when…**:
+All under **Tools → Backlog (articles read)**.
+
+### Auto-mark read when…
 
 | Mode | An article is auto-marked read when… |
 | --- | --- |
@@ -77,9 +77,33 @@ Under **Backlog → Auto-mark read when…**:
 
 Auto-marking is never triggered by *jumping* to an article (via a link or the list) — only by actually reading through it.
 
+### Fade links to read articles
+
+Controls the in-text dimming of links whose target article you've already read:
+
+| Setting | Effect |
+| --- | --- |
+| **Off** | links are never dimmed |
+| **Subtle** | lightly dimmed |
+| **Medium** *(default)* | clearly dimmed but still readable |
+| **Strong** | heavily dimmed / nearly ghosted |
+
+On greyscale e-ink, "dimmed" is a lighter grey. The dimming is painted over the finished page — it never changes the text layout or triggers a re-render.
+
 ## How it works
 
 Backlog reads the book's **table of contents** and treats each **top-level entry** as an article. It records read state in the book's KOReader sidecar (the per-book metadata KOReader already keeps), keyed by each article's **stable location in the document** (its xpointer) rather than a page number — which is why marks survive re-pagination. The EPUB itself is never modified.
+
+## FAQ
+
+**I installed Backlog but don't see it in the menu.**
+Backlog is a *document-only* plugin — it only appears while a **book is open**, not on the home screen / file browser. Open a book, then look under **Tools (wrench) → Backlog (articles read)**.
+
+**Cross-reference links aren't fading.**
+Fading only applies to links pointing to an article you've **already marked read**, in a book Backlog is tracking, with **Fade links to read articles** not set to *Off*. On greyscale e-ink the dimming is a lighter grey, so it's subtler than on a colour screen — try **Strong** if you want more contrast.
+
+**Does it modify my EPUB?**
+No. Read state lives in KOReader's per-book sidecar (`.sdr`); the EPUB file is never touched.
 
 ## Development
 
@@ -96,7 +120,7 @@ Linting uses a config that mirrors KOReader's own:
 luacheck .
 ```
 
-The KOReader-coupled glue (`main.lua`, `ui/articles_view.lua`) is verified in the KOReader emulator.
+The KOReader-coupled glue (`main.lua`, `ui/articles_view.lua`, `ui/reflinks_overlay.lua`) is verified in the KOReader emulator.
 
 ## License
 
