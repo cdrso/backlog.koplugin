@@ -7,9 +7,8 @@ local _ = require("gettext")
 local T = require("ffi/util").template
 
 -- UTF-8 byte escapes (LuaJIT has no \u{} literal):
-local READ_PREFIX = "\226\156\147  " -- U+2713 check mark
-local CUR_PREFIX = "\226\150\182  "  -- U+25B6 right-pointing triangle
-local NONE_PREFIX = "   "
+local READ_MARK = "\226\156\147" -- U+2713 check mark
+local CUR_MARK = "\226\150\182"  -- U+25B6 right-pointing triangle
 
 local ArticlesView = {}
 
@@ -27,14 +26,12 @@ function ArticlesView.show(backlog)
         local items = {}
         local cur = backlog:currentIndex()
         for i, ch in ipairs(backlog.chapters) do
-            local prefix = NONE_PREFIX
-            if Model.is_read(backlog.state, ch.key) then
-                prefix = READ_PREFIX
-            elseif i == cur then
-                prefix = CUR_PREFIX
-            end
+            -- Two independent slots so "current" and "read" show together:
+            -- column 1 = current marker, column 2 = read marker.
+            local cur_mark = (i == cur) and CUR_MARK or " "
+            local read_mark = Model.is_read(backlog.state, ch.key) and READ_MARK or " "
             items[i] = {
-                text = prefix .. ch.title,
+                text = cur_mark .. " " .. read_mark .. "  " .. ch.title,
                 mandatory = tostring(ch.start_page),
                 bold = (i == cur),
                 chapter_index = i,
