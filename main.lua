@@ -10,8 +10,6 @@ local logger = require("logger")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
-local AUTOMARK_MIN_FRACTION = 0.5
-
 -- lightenRect factors for the "Faded links" setting; "off" is absent -> nil.
 local FADE_LEVELS = { subtle = 0.25, medium = 0.4, strong = 0.6 }
 
@@ -28,11 +26,20 @@ function Backlog:init()
     self.cur_page = nil
     self.prev_index = nil
     self.prev_page = nil
-    self.max_seen_page = nil
+    -- migrate the old multi-mode auto-mark setting to the on/off toggle
+    local mode = G_reader_settings:readSetting("backlog_automark_mode")
+    if mode then
+        if mode == "off" then G_reader_settings:saveSetting("backlog_automark", false) end
+        G_reader_settings:delSetting("backlog_automark_mode")
+    end
 end
 
-function Backlog:getAutoMarkMode()
-    return G_reader_settings:readSetting("backlog_automark_mode", "end")
+function Backlog:getAutoMark()
+    return G_reader_settings:nilOrTrue("backlog_automark")
+end
+
+function Backlog:getNotify()
+    return G_reader_settings:nilOrTrue("backlog_notify")
 end
 
 function Backlog:_rebuildChapters()
@@ -95,7 +102,7 @@ function Backlog:onDocumentRerendered()
     if self.state.tracked then
         self:_rebuildChapters()
     end
-    self.prev_index, self.prev_page, self.max_seen_page = nil, nil, nil
+    self.prev_index, self.prev_page = nil, nil
 end
 
 function Backlog:onSaveSettings()
@@ -125,31 +132,9 @@ function Backlog:_onPosition(page)
     if not self.state.tracked then return end
 
     local cur = Model.index_for_page(self.chapters, page)
-    local contiguous = self.prev_page ~= nil and math.abs(page - self.prev_page) <= 1
-
-    if cur and contiguous then
-        if cur == self.prev_index then
-            self.max_seen_page = math.max(self.max_seen_page or page, page)
-        else
-            self.max_seen_page = page -- entered a (new) chapter by reading
-        end
-        local prev_frac = 0
-        if self.prev_index and self.chapters[self.prev_index] then
-            local p = self.chapters[self.prev_index]
-            local len = p.end_page - p.start_page + 1
-            prev_frac = ((self.max_seen_page or p.start_page) - p.start_page + 1) / len
-        end
-        local target = Model.should_automark{
-            mode = self:getAutoMarkMode(),
-            prev_index = self.prev_index,
-            cur_index = cur,
-            is_chapter_end = self.chapters[cur] and page >= self.chapters[cur].end_page or false,
-            prev_read_fraction = prev_frac,
-            min_fraction = AUTOMARK_MIN_FRACTION,
-        }
-        if target and not Model.is_read(self.state, self.chapters[target].key) then
-            self:_markRead(target)
-        end
+    if self:getAutoMark() then
+        local target = Model.automark_on_step(self.prev_index, self.prev_page, cur, page)
+        if target then self:_markRead(target) end
     end
 
     self.prev_page = page
@@ -158,11 +143,21 @@ end
 
 function Backlog:_markRead(index)
     local ch = self.chapters[index]
-    if not ch then return end
+    if not ch or Model.is_read(self.state, ch.key) then return end
     Model.set_read(self.state, ch.key, os.time())
     logger.dbg("Backlog: marked read:", ch.title)
-    UIManager:show(Notification:new{ text = T(_("Backlog: \"%1\" read"), ch.title) })
+    if self:getNotify() then
+        UIManager:show(Notification:new{ text = T(_("Backlog: \"%1\" read"), ch.title) })
+    end
     self:_repaintPage() -- refresh faded cross-reference links to this article
+end
+
+-- Paged past the final page: the last article is finished. Broadcast event, so
+-- do not consume it (ReaderStatus shows its end-of-book dialog on the same one).
+function Backlog:onEndOfBook()
+    if self.state.tracked and self:getAutoMark() and #self.chapters > 0 then
+        self:_markRead(#self.chapters)
+    end
 end
 
 function Backlog:gotoChapter(index)
@@ -251,13 +246,14 @@ function Backlog:addToMainMenu(menu_items)
                 callback = function() self:onBacklogNextUnread() end,
             },
             {
-                text = _("Auto-mark read when…"),
-                sub_item_table = {
-                    self:_modeRadio(_("Reaching the article's end"), "end"),
-                    self:_modeRadio(_("Leaving the article"), "leaving"),
-                    self:_modeRadio(_("Either"), "either"),
-                    self:_modeRadio(_("Off (manual only)"), "off"),
-                },
+                text = _("Auto-mark articles read"),
+                checked_func = function() return self:getAutoMark() end,
+                callback = function() G_reader_settings:flipNilOrTrue("backlog_automark") end,
+            },
+            {
+                text = _("Show read notifications"),
+                checked_func = function() return self:getNotify() end,
+                callback = function() G_reader_settings:flipNilOrTrue("backlog_notify") end,
             },
             {
                 text = _("Fade links to read articles"),
@@ -269,15 +265,6 @@ function Backlog:addToMainMenu(menu_items)
                 },
             },
         },
-    }
-end
-
-function Backlog:_modeRadio(text, value)
-    return {
-        text = text,
-        checked_func = function() return self:getAutoMarkMode() == value end,
-        radio = true,
-        callback = function() G_reader_settings:saveSetting("backlog_automark_mode", value) end,
     }
 end
 

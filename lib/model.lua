@@ -98,29 +98,16 @@ function Model.next_unread(chapters, state, from_index)
     return nil
 end
 
--- opts = { mode, prev_index, cur_index, is_chapter_end, prev_read_fraction, min_fraction }
--- Returns the chapter index to mark read, or nil. Assumes a contiguous (non-jump) move;
--- the caller filters out jumps before calling.
-function Model.should_automark(opts)
-    local mode = opts.mode or "end"
-    if mode == "off" then return nil end
-    local prev, cur = opts.prev_index, opts.cur_index
-    if prev == nil or cur == nil then return nil end
-    if cur == prev then
-        -- stayed in the same chapter
-        if (mode == "end" or mode == "either") and opts.is_chapter_end then
-            return cur
-        end
-        return nil
-    else
-        -- crossed into a different chapter
-        if mode == "leaving" or mode == "either" then
-            if (opts.prev_read_fraction or 0) >= (opts.min_fraction or 0) then
-                return prev
-            end
-        end
-        return nil
+-- Auto-mark decision for one reading-position step. Returns the article index to
+-- mark read, or nil. A contiguous forward step that crosses out of prev_index
+-- means the reader turned PAST that article's last page, so it is finished. The
+-- final article has no page after it; the caller marks it on the EndOfBook event.
+function Model.automark_on_step(prev_index, prev_page, cur_index, page)
+    if not (prev_index and cur_index and prev_page) then return nil end
+    if cur_index > prev_index and page == prev_page + 1 then
+        return prev_index
     end
+    return nil
 end
 
 return Model
