@@ -41,7 +41,7 @@ function Backlog:_rebuildChapters()
     end
     local toc = self.ui.toc and self.ui.toc.toc or {}
     local page_count = self.document:getPageCount()
-    self.chapters = Model.build_chapters(toc, page_count)
+    self.chapters = Model.build_articles(toc, page_count)
     logger.dbg("Backlog: built", #self.chapters, "chapters")
 end
 
@@ -176,6 +176,24 @@ function Backlog:toggleRead(index)
     local ch = self.chapters[index]
     if not ch then return end
     return Model.toggle(self.state, ch.key, os.time())
+end
+
+-- Mark every article in a section read, or all unread if they already all are.
+function Backlog:toggleSectionRead(section)
+    local all_read = true
+    for _, a in ipairs(self.chapters) do
+        if a.section == section and not Model.is_read(self.state, a.key) then
+            all_read = false
+            break
+        end
+    end
+    local ts = os.time()
+    for _, a in ipairs(self.chapters) do
+        if a.section == section then
+            if all_read then Model.set_unread(self.state, a.key)
+            else Model.set_read(self.state, a.key, ts) end
+        end
+    end
 end
 
 function Backlog:onShowBacklog()

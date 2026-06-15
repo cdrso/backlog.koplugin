@@ -31,27 +31,54 @@ describe("read-state", function()
     end)
 end)
 
-describe("build_chapters", function()
-    local toc = {
-        { title = "A", page = 1, depth = 1, xpointer = "xpA" },
-        { title = "A.1", page = 2, depth = 2, xpointer = "xpA1" },
-        { title = "B", page = 5, depth = 1, xpointer = "xpB" },
-        { title = "C", page = 9, depth = 1, xpointer = "xpC" },
-    }
-    it("keeps only depth-1 entries, in order, with computed end_pages", function()
-        local ch = Model.build_chapters(toc, 12)
-        assert.are.equal(3, #ch)
-        assert.are.equal("xpA", ch[1].key)
-        assert.are.equal(1, ch[1].start_page)
-        assert.are.equal(4, ch[1].end_page)
-        assert.are.equal(5, ch[2].start_page)
-        assert.are.equal(8, ch[2].end_page)
-        assert.are.equal(9, ch[3].start_page)
-        assert.are.equal(12, ch[3].end_page)
+describe("build_articles", function()
+    it("flat TOC: every depth-1 entry is a leaf article (section=nil)", function()
+        local toc = {
+            { title = "A", page = 1, depth = 1, xpointer = "xpA" },
+            { title = "B", page = 5, depth = 1, xpointer = "xpB" },
+            { title = "C", page = 9, depth = 1, xpointer = "xpC" },
+        }
+        local a = Model.build_articles(toc, 12)
+        assert.are.equal(3, #a)
+        assert.are.equal("xpA", a[1].key)
+        assert.is_nil(a[1].section)
+        assert.are.equal(1, a[1].start_page); assert.are.equal(4, a[1].end_page)
+        assert.are.equal(5, a[2].start_page); assert.are.equal(8, a[2].end_page)
+        assert.are.equal(9, a[3].start_page); assert.are.equal(12, a[3].end_page)
+    end)
+    it("section-nested TOC: tracks the leaf articles, labelled by their section", function()
+        local toc = {
+            { title = "Leaders",  page = 1, depth = 1, xpointer = "xpL" },
+            { title = "Art 1",    page = 2, depth = 2, xpointer = "xp1" },
+            { title = "Art 2",    page = 5, depth = 2, xpointer = "xp2" },
+            { title = "Briefing", page = 9, depth = 1, xpointer = "xpB" },
+            { title = "Art 3",    page = 9, depth = 2, xpointer = "xp3" },
+        }
+        local a = Model.build_articles(toc, 12)
+        assert.are.equal(3, #a) -- the 3 leaf articles, not the 2 sections
+        assert.are.equal("Art 1", a[1].title)
+        assert.are.equal("Leaders", a[1].section)
+        assert.are.equal(2, a[1].start_page); assert.are.equal(4, a[1].end_page)
+        assert.are.equal("Art 2", a[2].title)
+        assert.are.equal("Leaders", a[2].section)
+        assert.are.equal("Art 3", a[3].title)
+        assert.are.equal("Briefing", a[3].section)
+        assert.are.equal(9, a[3].start_page); assert.are.equal(12, a[3].end_page)
+    end)
+    it("mixed TOC: standalone depth-1 (section=nil) alongside a nested leaf", function()
+        local toc = {
+            { title = "Cover", page = 1, depth = 1, xpointer = "xpCov" }, -- standalone
+            { title = "Sec",   page = 3, depth = 1, xpointer = "xpSec" }, -- section
+            { title = "Inner", page = 4, depth = 2, xpointer = "xpIn" },
+        }
+        local a = Model.build_articles(toc, 6)
+        assert.are.equal(2, #a)
+        assert.are.equal("Cover", a[1].title); assert.is_nil(a[1].section)
+        assert.are.equal("Inner", a[2].title); assert.are.equal("Sec", a[2].section)
     end)
     it("falls back to a synthetic key when xpointer missing", function()
-        local ch = Model.build_chapters({ { title = "T", page = 1, depth = 1 } }, 3)
-        assert.are.equal("idx1:T", ch[1].key)
+        local a = Model.build_articles({ { title = "T", page = 1, depth = 1 } }, 3)
+        assert.are.equal("idx1:T", a[1].key)
     end)
 end)
 

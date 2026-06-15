@@ -1,6 +1,6 @@
 -- Pure logic for the Backlog plugin. No KOReader dependencies, so it is unit
--- testable under bare luajit. A "chapter" record is { key, title, start_page,
--- end_page }; "state" is { version, read = { [key] = timestamp } }.
+-- testable under bare luajit. An "article" record is { key, title, start_page,
+-- end_page, section }; "state" is { version, read = { [key] = timestamp } }.
 local Model = {}
 
 function Model.new()
@@ -31,21 +31,36 @@ end
 
 -- toc_items: array of { title, page, depth, xpointer } (ReaderToc's self.toc).
 -- doc_page_count: total pages in the document.
--- Returns array of { key, title, start_page, end_page } for depth-1 entries, in order.
-function Model.build_chapters(toc_items, doc_page_count)
-    local tops = {}
+-- Returns the trackable articles -- the LEAF TOC entries (those with no deeper
+-- child), in order, as { key, title, start_page, end_page, section }. `section`
+-- is the title of the nearest preceding shallower entry (the parent), or nil for
+-- a top-level leaf. So "article" = leaf content: a flat anthology tracks its
+-- depth-1 entries (each a leaf, section=nil); a section-nested magazine (e.g. The
+-- Economist) tracks the depth-2 articles, labelled by their depth-1 section.
+function Model.build_articles(toc_items, doc_page_count)
+    local arts = {}
     for i, it in ipairs(toc_items) do
-        if it.depth == 1 then
-            if tops[#tops] then tops[#tops].end_page = it.page - 1 end
-            tops[#tops + 1] = {
+        local nxt = toc_items[i + 1]
+        local is_leaf = nxt == nil or nxt.depth <= it.depth
+        if is_leaf then
+            local section
+            for j = i - 1, 1, -1 do -- nearest shallower ancestor = the section
+                if toc_items[j].depth < it.depth then
+                    section = toc_items[j].title
+                    break
+                end
+            end
+            if arts[#arts] then arts[#arts].end_page = it.page - 1 end
+            arts[#arts + 1] = {
                 key = it.xpointer or ("idx" .. i .. ":" .. tostring(it.title)),
                 title = it.title,
                 start_page = it.page,
+                section = section,
             }
         end
     end
-    if tops[#tops] then tops[#tops].end_page = doc_page_count end
-    return tops
+    if arts[#arts] then arts[#arts].end_page = doc_page_count end
+    return arts
 end
 
 function Model.index_for_page(chapters, page)
