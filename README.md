@@ -10,7 +10,7 @@ KOReader treats the whole file as one book with a single progress bar, which tel
 
 > **"Wait — have I already read this one?"**
 
-**Backlog** answers it. It treats each chapter (each top-level table-of-contents entry) as a separate **article**, remembers which ones you've read, shows them all in one list, **dims the in-text links that point to articles you've already read** (like visited web links), and marks them read automatically as you finish — so you always know what's left, no matter how non-linearly you read.
+**Backlog** answers it. It treats each **article** as a separate item — grouping them under their sections in magazines that nest articles that way — remembers which ones you've read, shows them all in one list, **dims the in-text links that point to articles you've already read** (like visited web links), and marks them read automatically as you finish — so you always know what's left, no matter how non-linearly you read.
 
 ## Screenshots
 
@@ -20,8 +20,8 @@ KOReader treats the whole file as one book with a single progress bar, which tel
 
 ## Features
 
-- **Articles list** — every article with its status at a glance: **✓ read**, **▶ currently reading**, or unread, plus a **"N / total read"** counter.
-- **Tap to jump** to any article; **long-press to toggle** its read/unread state.
+- **Articles list** — every article with its status at a glance: **✓ read**, **▶ currently reading**, or unread, plus a **"N / total read"** counter. Magazines that group articles into sections get a header per section with its own read count.
+- **Tap to jump** to any article; **long-press to toggle** its read/unread state. Tap a **section header** to jump to its first article, or long-press it to mark the whole section read.
 - **Auto-mark on finish** — an article is marked read when you reach its end (configurable — see [Settings](#settings)).
 - **Faded cross-references** — in the text, links pointing to articles you've already read are dimmed (like visited web links), so you can see at a glance which references you've been through. Adjustable strength, or off — see [Settings](#settings).
 - **Jump to next unread** — one action that takes you straight to the next article you haven't read (bindable to a gesture).
@@ -60,6 +60,7 @@ Open a book that's a collection of articles, then:
 2. In the list:
    - **Tap** an article to jump to it.
    - **Long-press** an article to mark it read / unread.
+   - In a magazine with sections: **tap a section header** to jump to its first article, or **long-press** it to mark the whole section read / unread.
 3. As you read, finishing an article marks it read automatically (configurable below).
 
 ## Settings
@@ -92,7 +93,7 @@ On greyscale e-ink, "dimmed" is a lighter grey. The dimming is painted over the 
 
 ## How it works
 
-Backlog reads the book's **table of contents** and treats each **top-level entry** as an article. It records read state in the book's KOReader sidecar (the per-book metadata KOReader already keeps), keyed by each article's **stable location in the document** (its xpointer) rather than a page number — which is why marks survive re-pagination. The EPUB itself is never modified.
+Backlog reads the book's **table of contents** and treats each **article** — a leaf entry, one with no sub-entries — as a trackable item. In a flat anthology that's every top-level entry; in a magazine whose sections nest articles, it's the articles inside each section, grouped under that section in the list. It records read state in the book's KOReader sidecar (the per-book metadata KOReader already keeps), keyed by each article's **stable location in the document** (its xpointer) rather than a page number — which is why marks survive re-pagination. The EPUB itself is never modified.
 
 ## FAQ
 
