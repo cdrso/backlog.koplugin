@@ -1,132 +1,172 @@
 # Backlog
 
-**Per-article read tracking for anthology EPUBs in KOReader.**
+**Backlog helps KOReader remember which articles you have already read inside a magazine, anthology, newsletter, or other multi-article EPUB.**
 
-## The problem
+Some EPUBs are not one story from start to finish. They are collections of separate pieces: articles, essays, blog posts, reference pages, or magazine sections. KOReader shows progress for the whole book, but it does not tell you which individual pieces are done.
 
-Some EPUBs aren't linear books, they're **collections of standalone, cross-linked essays or articles** (anthologies, blog archives, essay collections) that you read in **any order**, hopping between pieces via links.
+Backlog adds that missing article-level memory. It shows every article in one list, marks articles as read when you finish them, lets you save pieces for later, and can fade links to articles you have already read.
 
-KOReader treats the whole file as one book with a single progress bar, which tells you nothing useful here. And when you tap a link to a *referenced* article, there's no way to answer the one question that actually matters:
+## What Backlog Solves
 
-> **"Wait — have I already read this one?"**
+Backlog is for books where you often ask:
 
-**Backlog** answers it. It treats each **article** as a separate item — grouping them under their sections in magazines that nest articles that way — remembers which ones you've read, shows them all in one list, **dims the in-text links that point to articles you've already read** (like visited web links), and marks them read automatically as you finish — so you always know what's left, no matter how non-linearly you read.
+> **"Have I already read this article?"**
 
-## Screenshots
+This is common with:
+
+- magazine EPUBs
+- newsletter or RSS collections
+- anthologies of essays or short stories
+- research/reference EPUBs with many linked entries
+- any reflowable book where the table of contents is really a list of separate pieces
+
+Backlog treats each final table-of-contents entry as an article. In a flat anthology, those may be the top-level chapters. In a magazine with sections, those are usually the articles inside each section.
+
+## Main Features
+
+- **Article list:** see all articles in the current book with read, unread, current, and saved-for-later status.
+- **Per-section counts:** sectioned magazines show counts like `3/8 read` for each section.
+- **Automatic read marking:** when you turn past an article's last page, Backlog marks it read.
+- **Manual marking:** long-press an article to mark it read/unread or save it for later.
+- **Save for later:** keep a separate list of articles you want to return to.
+- **Jump actions:** jump to the next unread article or the next saved article.
+- **Faded read links:** links to articles you have already read can appear dimmed, like visited links in a browser.
+- **Per-book tracking:** Backlog only tracks books where you open its article list, and it never changes the EPUB file itself.
+
+## Screenshot
 
 <p align="center">
   <img src="screenshots/articles-list.jpg" width="360" alt="Articles list"><br>
   <em>Articles list — ▶ current, ✓ read, running count</em>
 </p>
 
-## Features
+## Install
 
-- **Articles list** — every article with its status at a glance: **✓ read**, **▶ currently reading**, or unread, plus a **"N / total read"** counter. Magazines that group articles into sections get a header per section with its own read count.
-- **Tap to jump** to any article; **long-press to toggle** its read/unread state. Tap a **section header** to jump to its first article, or long-press it to mark the whole section read.
-- **Auto-mark on finish** — an article is marked read when you **turn past its last page** (when you finish it and move on, not when its last page appears). On by default; can be turned off, and the notification can be silenced — see [Settings](#settings).
-- **Faded cross-references** — in the text, links pointing to articles you've already read are dimmed (like visited web links), so you can see at a glance which references you've been through. Adjustable strength, or off — see [Settings](#settings).
-- **Jump to next unread** — one action that takes you straight to the next article you haven't read (bindable to a gesture).
-- **Per-book persistence** — read state is saved with the book and keyed by each article's *location* in the document, so it **survives font changes (re-pagination) and restarts**.
-- **Opt-in per book** — Backlog stays dormant until you open its article list for a book. Books you never use it on are left completely untouched (nothing is even written to their metadata).
+Backlog needs KOReader and a book with a table of contents. It works best with EPUBs and other books whose text reflows, especially when the chapters are separate articles or entries.
 
-## Requirements
+### Easiest: App Store Plugin
 
-- **KOReader** (a recent version) on any supported device: Kindle, Kobo, PocketBook, Android, or the Linux/macOS desktop build.
-- A book with a **table of contents** (EPUB and other reflowable formats). The more its chapters are standalone articles, the more useful Backlog is.
+If you have the [KOReader App Store plugin](https://github.com/omer-faruq/appstore.koplugin):
 
-## Installation
+1. Open KOReader.
+2. Go to Tools → App Store.
+3. Search for **Backlog**.
+4. Install it and restart KOReader.
 
-### Manual
+### Manual Install
 
-1. Download the latest release (or clone this repo) to get the `backlog.koplugin` folder.
-2. Copy it into KOReader's `plugins` directory:
-   | Device | Path |
-   | --- | --- |
-   | Kindle | `/mnt/us/koreader/plugins/` |
-   | Kobo | `.adds/koreader/plugins/` |
-   | PocketBook | `applications/koreader/plugins/` |
-   | Android | `koreader/plugins/` (in KOReader's data directory) |
-   | Linux / desktop | `~/.config/koreader/plugins/` |
-3. Restart KOReader.
+1. Download or clone this repository.
+2. Make sure the plugin folder is named `backlog.koplugin`.
+3. Copy that folder into KOReader's `plugins` directory.
+4. Restart KOReader.
 
-### KOReader App Store
+Common plugin locations:
 
-If you have the [App Store plugin](https://github.com/omer-faruq/appstore.koplugin), install Backlog right on the device: **Tools → App Store**, search **Backlog**, install. No computer needed.
+| Device | Copy `backlog.koplugin` to |
+| --- | --- |
+| Kindle | `/mnt/us/koreader/plugins/` |
+| Kobo | `.adds/koreader/plugins/` |
+| PocketBook | `applications/koreader/plugins/` |
+| Android | `koreader/plugins/` in KOReader's data directory |
+| Linux / desktop | `~/.config/koreader/plugins/` |
 
-## Usage
+## How To Use It
 
-Open a book that's a collection of articles, then:
+Open a book, then go to:
 
-1. Tap the top of the screen → the **Tools** (wrench) menu → **Backlog (articles read) → Show articles.**
-2. In the list:
-   - **Tap** an article to jump to it.
-   - **Long-press** an article to mark it read / unread.
-   - In a magazine with sections: **tap a section header** to jump to its first article, or **long-press** it to mark the whole section read / unread.
-3. As you read, finishing an article marks it read automatically (configurable below).
+**Tools → Backlog (articles read) → Show articles**
+
+The first time you open this list for a book, Backlog starts tracking that book. Books you never open in Backlog are left alone.
+
+### The Article List
+
+The list shows one row per article:
+
+- blank = unread
+- `▶` = the article you are currently reading
+- `✓` = read
+- `☆` = saved for later
+
+Tap an article to jump to it. Tap a section header to jump to the first article in that section.
+
+Long-press an article to mark it read/unread or save it for later. Long-press a section header to mark the whole section read, or unread if the whole section was already read.
+
+### Reading Articles
+
+With the default settings, Backlog marks an article read when you turn past its last page.
+
+If you prefer to control everything yourself, turn off **Auto-mark articles read** and use long-press actions in the article list.
+
+### Save For Later
+
+Use save for later when you notice an article you want to come back to.
+
+You can save articles in three ways:
+
+- In the article list: long-press an article → Save for later.
+- From the current article: assign **Backlog: save current for later** to a gesture.
+- From a link in the text: long-press the link until KOReader's selection menu opens, then tap **Save for later**.
+
+Saved articles show `☆` and appear together in a **Saved** group at the top of the article list. You can also assign **Backlog: next saved** to a gesture to move through saved articles quickly.
+
+The three states are exclusive — an article is unread, saved, *or* read, never two at once. Saving a read article clears its read mark (it moves to Saved); finishing a saved article marks it read (and drops it from Saved).
+
+### Jump To The Next Article
+
+Backlog adds two actions you can use from the menu or assign to gestures:
+
+- **Backlog: next unread**
+- **Backlog: next saved**
+
+These are useful when you are reading a magazine or collection out of order.
+
+### Faded Links
+
+When a link points to an article you have already read, Backlog can dim that link in the page text. This makes cross-references easier to scan because already-read destinations look different from unread ones.
+
+You can turn this off or adjust the strength in settings.
 
 ## Settings
 
-All under **Tools → Backlog (articles read)**.
+Settings are under **Tools → Backlog (articles read)**.
 
-### Auto-mark articles read *(default: on)*
-
-An article is marked read once you **turn past its last page** — when you finish it and move on, not when its last page first appears. Paging past the end of the book marks the final article. Turn this off to mark every article manually.
-
-Auto-marking is never triggered by *jumping* to an article (via a link or the list) — only by reading through it.
-
-### Show read notifications *(default: on)*
-
-When an article is auto-marked read, a brief notification appears at the top of the screen. Turn this off to mark silently — the ✓ still appears in the articles list.
-
-### Fade links to read articles
-
-Controls the in-text dimming of links whose target article you've already read:
-
-| Setting | Effect |
-| --- | --- |
-| **Off** | links are never dimmed |
-| **Subtle** | lightly dimmed |
-| **Medium** *(default)* | clearly dimmed but still readable |
-| **Strong** | heavily dimmed / nearly ghosted |
-
-On greyscale e-ink, "dimmed" is a lighter grey. The dimming is painted over the finished page — it never changes the text layout or triggers a re-render.
-
-## How it works
-
-Backlog reads the book's **table of contents** and treats each **article** — a leaf entry, one with no sub-entries — as a trackable item. In a flat anthology that's every top-level entry; in a magazine whose sections nest articles, it's the articles inside each section, grouped under that section in the list. It records read state in the book's KOReader sidecar (the per-book metadata KOReader already keeps), keyed by each article's **stable location in the document** (its xpointer) rather than a page number — which is why marks survive re-pagination. The EPUB itself is never modified.
+- **Auto-mark articles read** *(default: on)* — mark an article read when you turn past its last page.
+- **Show read notifications** *(default: on)* — show a short message when an article is automatically marked read.
+- **Fade links to read articles** *(default: Medium)* — choose Off, Subtle, Medium, or Strong.
 
 ## FAQ
 
-**I installed Backlog but don't see it in the menu.**
-Backlog is a *document-only* plugin — it only appears while a **book is open**, not on the home screen / file browser. Open a book, then look under **Tools (wrench) → Backlog (articles read)**.
+**Does Backlog change my EPUB?**
 
-**Cross-reference links aren't fading.**
-Fading only applies to links pointing to an article you've **already marked read**, in a book Backlog is tracking, with **Fade links to read articles** not set to *Off*. On greyscale e-ink the dimming is a lighter grey, so it's subtler than on a colour screen — try **Strong** if you want more contrast.
+No. Backlog stores read/saved status in KOReader's per-book settings next to the book, keyed by each article's location in the document — so your marks survive font changes (re-pagination) and restarts. The EPUB file is never changed.
 
-**Does it modify my EPUB?**
-No. Read state lives in KOReader's per-book sidecar (`.sdr`); the EPUB file is never touched.
+**Why do I not see Backlog on the home screen?**
+
+Backlog only appears while a book is open. Open a book, then go to Tools → Backlog (articles read).
+
+**What counts as an article?**
+
+Backlog uses the book's table of contents. It tracks the final entries: entries with no smaller entries underneath them. In a simple anthology, that is usually each chapter. In a sectioned magazine, that is usually each article inside a section.
+
+**Why are links not fading?**
+
+Check that the book is being tracked, the linked article is marked read, and **Fade links to read articles** is not set to Off. On e-ink screens, try Strong if the default is too subtle.
+
+**Why does holding a link sometimes open the dictionary instead of Save for later?**
+
+KOReader treats a short hold as dictionary lookup. Hold until the long hold marker appears on the top left of the screen and then release to get the correct menu.
 
 ## Development
 
-The decision logic lives in `lib/model.lua` with **no KOReader dependencies**, so it's unit-tested in isolation:
+The decision logic lives in `lib/model.lua` with no KOReader dependencies, so it is unit-tested in isolation:
 
 ```sh
 busted spec/unit/model_spec.lua   # with the busted framework
 luajit spec/run.lua               # or zero-install, with just LuaJIT
 ```
 
-Linting uses a config that mirrors KOReader's own:
-
-```sh
-luacheck .
-```
-
-The KOReader-coupled glue (`main.lua`, `ui/articles_view.lua`, `ui/reflinks_overlay.lua`) is verified in the KOReader emulator.
+Linting mirrors KOReader's own config: `luacheck .`. The KOReader-coupled glue (`main.lua`, `ui/articles_view.lua`, `ui/reflinks_overlay.lua`) is verified in the KOReader emulator.
 
 ## License
 
-Released under the [MIT License](LICENSE).
-
-## Acknowledgements
-
-Built on [KOReader](https://github.com/koreader/koreader)'s plugin API.
+Released under the [MIT License](LICENSE). Built on [KOReader](https://github.com/koreader/koreader)'s plugin API.

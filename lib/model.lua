@@ -4,7 +4,7 @@
 local Model = {}
 
 function Model.new()
-    return { version = 1, read = {} }
+    return { version = 1, read = {}, saved = {} }
 end
 
 function Model.is_read(state, key)
@@ -27,6 +27,49 @@ function Model.toggle(state, key, ts)
         Model.set_read(state, key, ts)
         return true
     end
+end
+
+-- "Saved" / to-read set: a mirror of the read set above, keyed the same way.
+function Model.is_saved(state, key)
+    return state.saved[key] ~= nil
+end
+
+function Model.set_saved(state, key, ts)
+    state.saved[key] = ts or 0
+end
+
+function Model.set_unsaved(state, key)
+    state.saved[key] = nil
+end
+
+-- Saving takes precedence over read: a saved article is "to read (again)", so
+-- saving clears any read mark. With mark_read clearing saved, read and saved are
+-- mutually exclusive -- an article is exactly one of unread / saved / read.
+function Model.mark_saved(state, key, ts)
+    if not Model.is_saved(state, key) then
+        Model.set_saved(state, key, ts)
+    end
+    Model.set_unread(state, key)
+end
+
+function Model.toggle_saved(state, key, ts)
+    if Model.is_saved(state, key) then
+        Model.set_unsaved(state, key)
+        return false
+    end
+    Model.mark_saved(state, key, ts)
+    return true
+end
+
+-- Mark an article read and drop it from the to-read set (reading it clears the
+-- ☆). Preserves an existing first-read timestamp: re-marking does not overwrite.
+-- All read-marking paths (auto-mark on finish, manual toggle, section mark) go
+-- through here so "reading clears saved" holds everywhere.
+function Model.mark_read(state, key, ts)
+    if not Model.is_read(state, key) then
+        Model.set_read(state, key, ts)
+    end
+    Model.set_unsaved(state, key)
 end
 
 -- toc_items: array of { title, page, depth, xpointer } (ReaderToc's self.toc).
@@ -82,6 +125,16 @@ function Model.count_read(chapters, state)
     return n
 end
 
+function Model.count_saved(chapters, state)
+    local n = 0
+    for _, ch in ipairs(chapters) do
+        if Model.is_saved(state, ch.key) then
+            n = n + 1
+        end
+    end
+    return n
+end
+
 -- Returns index, key of the first unread chapter strictly after from_index,
 -- wrapping around to the start. from_index may be nil (treated as 0).
 -- Returns nil if all chapters are read.
@@ -92,6 +145,22 @@ function Model.next_unread(chapters, state, from_index)
     for step = 1, n do
         local i = ((start + step - 1) % n) + 1
         if not Model.is_read(state, chapters[i].key) then
+            return i, chapters[i].key
+        end
+    end
+    return nil
+end
+
+-- Returns index, key of the first SAVED chapter strictly after from_index,
+-- wrapping around to the start. from_index may be nil (treated as 0).
+-- Returns nil if no chapter is saved.
+function Model.next_saved(chapters, state, from_index)
+    local n = #chapters
+    if n == 0 then return nil end
+    local start = from_index or 0
+    for step = 1, n do
+        local i = ((start + step - 1) % n) + 1
+        if Model.is_saved(state, chapters[i].key) then
             return i, chapters[i].key
         end
     end

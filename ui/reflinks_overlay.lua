@@ -8,18 +8,6 @@ local Model = require("lib/model")
 
 local ReflinksOverlay = WidgetContainer:extend{ backlog = nil }
 
--- Which chapter does this internal page-link point at? (nil if unresolvable.)
--- link.section is the href (e.g. "#_doc_fragment_66"); crengine resolves it to a
--- page, which maps to a chapter range. Perf: resolved per paint; pages carry
--- few links so it stays cheap -- add a per-book cache only if it profiles hot.
-local function target_chapter_index(b, doc, link)
-    local href = link.section
-    if not href or href == "" then return nil end
-    local ok, page = pcall(doc.getPageFromXPointer, doc, href)
-    if not ok or not page then return nil end
-    return Model.index_for_page(b.chapters, page)
-end
-
 function ReflinksOverlay:paintTo(bb, x, y)
     local b = self.backlog
     if not b or not b.state or not b.state.tracked or #b.chapters == 0 then return end
@@ -32,7 +20,10 @@ function ReflinksOverlay:paintTo(bb, x, y)
     local cur_idx = b.currentIndex and b:currentIndex() or nil
 
     for _, link in ipairs(links) do
-        local idx = target_chapter_index(b, doc, link)
+        -- link.section is the href; resolve to the chapter it lands in (shared
+        -- with the save-for-later button). Perf: resolved per paint, but pages
+        -- carry few links so it stays cheap -- add a cache only if it profiles hot.
+        local idx = b:_chapterIndexForXPointer(link.section)
         -- skip intra-article links (e.g. footnotes); only fade cross-references
         if idx and idx ~= cur_idx and Model.is_read(b.state, b.chapters[idx].key) then
             local segs = link.segments
